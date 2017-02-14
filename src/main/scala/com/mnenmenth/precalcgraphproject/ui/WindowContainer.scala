@@ -16,7 +16,16 @@ import scalafx.scene.layout.{BorderPane, HBox}
   */
 class WindowContainer extends BorderPane {
 
-  val graph = new Graph(NumberAxis("Time (Years)"), NumberAxis("# Sold x 100000"), "Fifty Shades of Gray Books vs. Whip Sales Per Year", "Books", "Whips")
+  val graph = new Graph(
+    NumberAxis("Time (Months)"),
+    NumberAxis("# In Circulation x 100,000"),
+    "Fifty Shades of Gray Books vs. Marriage Licenses in Circulation",
+    "Books",
+    "Licenses")
+
+  val y1Data = EqData(1, 3.5)
+  val y2Data = EqData(4000, 1.35)
+  var timePeriod = 12.0
 
   /*def calcEq(eq: String, variables:): Int = {
     val e = new ExpressionBuilder("200 * 1.02 ^ t")
@@ -26,21 +35,22 @@ class WindowContainer extends BorderPane {
     e.evaluate().toInt
   }*/
 
-  val table = new Table("Year", "Book Sales", "Whip Sales")
+  val table = new Table("Month", "Books", "Licences")
 
-  case class EqData(start: Double, multiplier: Double, initValue: Double = 0)
+    case class EqData(start: Double, multiplier: Double)
 
-  val yearSetBox = new HBox {
+  val monthSetBox = new HBox {
     spacing = 10
     alignment = Pos.Center
   }
-  val yearLabel = new Label("Years: ")
-  val yearInput = new TextField {
-    text = "12"
+  val monthLabel = new Label("Months: ")
+  val monthInput = new TextField {
+    text = "12.0"
     prefColumnCount = 4
     text.onChange({
       if (text.value.nonEmpty)
-        genPoints(EqData(1, 2), EqData(1, 1.9, 200), text.value.toInt)
+        timePeriod = text.value.toDouble
+        genPoints()
     })
   }
 
@@ -49,9 +59,13 @@ class WindowContainer extends BorderPane {
     prefColumnCount = 10
     text.onChange({
       if (text.value.nonEmpty) {
-        val vals = text.value.split(',')
-        if (vals(0).nonEmpty && vals(1).nonEmpty){
-          graph.setMax(vals(0).toInt, vals(1).toInt)
+        try {
+          val vals = text.value.split(',')
+          if (vals(0).nonEmpty && vals(1).nonEmpty) {
+            graph.setMax(vals(0).toDouble.toInt, vals(1).toDouble.toInt)
+          }
+        } catch {
+          case _: ArrayIndexOutOfBoundsException => println("Yeahhhhhh naaahh")
         }
       }
     })
@@ -61,28 +75,28 @@ class WindowContainer extends BorderPane {
     selected = false
   }
 
-  yearSetBox.children.addAll(yearLabel, yearInput, rangeLabel, rangeInput, rangeOverride)
+  monthSetBox.children.addAll(monthLabel, monthInput, rangeLabel, rangeInput, rangeOverride)
 
-  left = table
+  bottom = table
   center = graph
-  top = yearSetBox
+  top = monthSetBox
 
-  def genPoints(y1Data: EqData, y2Data: EqData, timePeriod: Int): Unit = {
+  def genPoints(): Unit = {
     val points = new ObservableBuffer[GraphPoint]()
     graph.setMin(1, 0)
-    for(i <- 1 to timePeriod) {
+    for(i: Double <- 1.0 to timePeriod by 0.1) {
       val y1 = BigDecimal(y1Data.start * math.pow(y1Data.multiplier, i)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-      val y2 = BigDecimal(y2Data.start * math.pow(y2Data.multiplier, i)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-      points += new GraphPoint(i, y1+y1Data.initValue, y2+y2Data.initValue, graph.line1, graph.line2)
+      val y2 = BigDecimal(y2Data.start * math.pow(y2Data.multiplier, -i)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+      points += new GraphPoint(BigDecimal(i).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble, y1, y2, graph.line1, graph.line2)
     }
     if(!rangeOverride.selected.value) {
-      val max = (timePeriod + 2, timePeriod*100)
-      graph.setMax(max._1, max._2)
+      val max = (timePeriod, timePeriod*100*2)
+      graph.setMax(max._1.ceil.toInt, max._2.ceil.toInt)
       rangeInput.text = s"${max._1},${max._2}"
     }
     table.items = points
   }
 
-  genPoints(EqData(1, 2), EqData(1, 1.9, 200), 12)
+  genPoints()
 
 }

@@ -27,10 +27,11 @@ class Graph(xAxis: NumberAxis, yAxis: NumberAxis, gTitle: String, line1Name: Str
   }
 
   xAxis.autoRanging = false
+  xAxis.tickUnit = 0.1
   yAxis.autoRanging = false
   title = gTitle
 
-  animated = true
+  animated = false
   legendSide = Side.Bottom
   legendVisible = true
 
