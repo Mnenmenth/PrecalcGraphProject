@@ -1,7 +1,5 @@
 package com.mnenmenth.precalcgraphproject.ui
 
-import net.objecthunter.exp4j.ExpressionBuilder
-
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Pos
 import scalafx.scene.chart.NumberAxis
